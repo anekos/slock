@@ -17,6 +17,7 @@
 #include <X11/keysym.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/Xatom.h>
 
 #if HAVE_BSD_AUTH
 #include <login_cap.h>
@@ -219,8 +220,12 @@ lockscreen(Display *dpy, int screen) {
 		unlockscreen(dpy, lock);
 		lock = NULL;
 	}
-	else 
+	else {
 		XSelectInput(dpy, lock->root, SubstructureNotifyMask);
+		unsigned int opacity = (unsigned int) (0.5 * 0xffffffff);
+		XChangeProperty(dpy, lock->win, XInternAtom(dpy, "_NET_WM_WINDOW_OPACITY", False), XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &opacity, 1L);
+		XSync(dpy, False);
+	}
 
 	return lock;
 }
