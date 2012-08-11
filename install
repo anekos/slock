@@ -1,0 +1,10 @@
+#!/bin/sh
+
+DEST=~/bin/slock
+
+make
+sudo chown root: slock
+sudo chmod u+s slock
+mv slock $DEST
+
+
