@@ -34,6 +34,7 @@ typedef struct {
 static Lock **locks;
 static int nscreens;
 static Bool running = True;
+static double opacity = 0.5;
 
 static void
 die(const char *errstr, ...) {
@@ -222,8 +223,8 @@ lockscreen(Display *dpy, int screen) {
 	}
 	else {
 		XSelectInput(dpy, lock->root, SubstructureNotifyMask);
-		unsigned int opacity = (unsigned int) (0.5 * 0xffffffff);
-		XChangeProperty(dpy, lock->win, XInternAtom(dpy, "_NET_WM_WINDOW_OPACITY", False), XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &opacity, 1L);
+		unsigned int value = (unsigned int) (opacity * 0xffffffff);
+		XChangeProperty(dpy, lock->win, XInternAtom(dpy, "_NET_WM_WINDOW_OPACITY", False), XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &value, 1L);
 		XSync(dpy, False);
 	}
 
@@ -232,7 +233,7 @@ lockscreen(Display *dpy, int screen) {
 
 static void
 usage(void) {
-	fprintf(stderr, "usage: slock [-v]\n");
+	fprintf(stderr, "usage: slock [-o <OPACITY>] [-v]\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -244,10 +245,24 @@ main(int argc, char **argv) {
 	Display *dpy;
 	int screen;
 
-	if((argc == 2) && !strcmp("-v", argv[1]))
-		die("slock-%s, © 2006-2012 Anselm R Garbe\n", VERSION);
-	else if(argc != 1)
-		usage();
+	{
+		int result;
+		while((result = getopt(argc,argv,"vo:")) != -1) {
+			switch(result) {
+				case 'v':
+					die("slock-%s, © 2006-2012 Anselm R Garbe\n", VERSION);
+				case 'o':
+					opacity = atof(optarg);
+					printf("%f\n", opacity);
+					break;
+				case '?':
+					usage();
+					break;
+			}
+		}
+		if ((argc - optind) > 0)
+			usage();
+	}
 
 	if(!getpwuid(getuid()))
 		die("slock: no passwd entry for you");
